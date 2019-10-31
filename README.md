@@ -1,2 +1,2 @@
 # lane_detection
-Repo to train the network 
+Repositopy to train the network 
