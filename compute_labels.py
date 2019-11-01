@@ -8,9 +8,9 @@ import cv2
 import numpy as np
 
 PATH = "./bdd100k/labels/"
-
 INPUT = ["daytime_highway_bdd100k_labels_images_val.json","daytime_highway_bdd100k_labels_images_train.json"]
 OUTPUT = "data.csv"
+
 
 class Lane:
 
@@ -20,6 +20,7 @@ class Lane:
         self.polygon = polygon
         self.y = mean(y for [x,y] in self.polygon)
         self.x = mean(x for [x,y] in self.polygon)
+
 
 def run(path, type):
     json_file = open(path)
@@ -41,13 +42,16 @@ def run(path, type):
             
         image_name = element["name"]
 
-        image_path = os.path.join("bdd100k/images/100k/train", image_name)
-        if not os.path.exists(image_path):
+        image_path = None
+        if os.path.exists(os.path.join("bdd100k/images/100k/train", image_name)):
+            image_path = os.path.join("bdd100k/images/100k/train", image_name)
+        elif os.path.exists(os.path.join("bdd100k/images/100k/test", image_name)):
             image_path = os.path.join("bdd100k/images/100k/test", image_name)
-        if not os.path.exists(image_path):
+        elif os.path.exists(os.path.join("bdd100k/images/100k/val", image_name)):
             image_path = os.path.join("bdd100k/images/100k/val", image_name)
-        print(image_path)
-
+        else:
+            raise("unknown path of the file")
+                
         totalLanes = 0
         currentLane = 0
 
@@ -84,7 +88,7 @@ def run(path, type):
                     break
             
             # currentLaneByY = next(i for i,v in enumerate(lanes) if v.current) + 1
-            writer.writerow([image_name, totalLanes, currentLaneByY])
+            writer.writerow([image_path, totalLanes, currentLaneByY])
             if show_images:
 
                 font                   = cv2.FONT_HERSHEY_SIMPLEX
@@ -102,10 +106,10 @@ def run(path, type):
 
                 cv2.imshow("window", img)
                 cv2.waitKey(0)
-        
-    
+
     json_file.close()
     out_file.close()
+
 
 if __name__ == "__main__":
     if os.path.exists(OUTPUT):
