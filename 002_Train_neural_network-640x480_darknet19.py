@@ -14,7 +14,8 @@ from keras.engine.input_layer import Input
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger, TensorBoard
 
 from keras import backend as K
-from darknet53 import darknet_base, GlobalAveragePooling2D
+from keras_darknet19 import DarknetConv2D, DarknetConv2D_BN_Leaky, bottleneck_block, bottleneck_x2_block
+from darknet53 import GlobalAveragePooling2D
 
 # In[36]:
 
@@ -101,7 +102,18 @@ else:
 inputs = Input(shape=input_shape)
 x = Cropping2D(cropping=((CROP_TOP, CROP_BOTTOM), (0, 0)), input_shape=input_shape)(inputs)
 x = GaussianNoise(0.5)(x)
-x = darknet_base(x)
+x = DarknetConv2D_BN_Leaky(32, (3, 3))(x)
+x = MaxPooling2D()(x)
+x = DarknetConv2D_BN_Leaky(64, (3, 3))(x)
+x = MaxPooling2D()(x)
+x = bottleneck_block(128, 64)(x)
+x = MaxPooling2D()(x)
+x = bottleneck_block(256, 128)(x)
+x = MaxPooling2D()(x)
+x = bottleneck_x2_block(512, 256)(x)
+x = MaxPooling2D()(x)
+x = bottleneck_x2_block(1024, 512)(x)
+x = DarknetConv2D(1000, (1, 1), activation='softmax')(x)
 x = GlobalAveragePooling2D()(x)
 x = Dense(3, activation='softmax')(x)
 model = Model(inputs,x)
